@@ -1,5 +1,8 @@
 # CS2-Tags
 
+![image](https://github.com/daffyyyy/CS2-Tags/assets/41084667/25dd3f2b-0604-41a2-b2bd-9be230db71e1)
+![image](https://github.com/daffyyyy/CS2-Tags/assets/41084667/663a0de1-b875-48fc-bda5-56add5a4833b)
+
 ### Description
 Adds tags to the server that can be easily edited, tags can be assigned via permission or steamid64
 
