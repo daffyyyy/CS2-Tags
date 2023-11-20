@@ -101,6 +101,8 @@ public class CS2_Tags : BasePlugin
 		if (player == null || !player.IsValid) return HookResult.Continue;
 		string steamid = new SteamID(player.SteamID).SteamId64.ToString();
 
+		if (info.GetArg(1) == "rtv") return HookResult.Continue;
+
 		if (JsonTags != null && JsonTags.TryGetValue("tags", out var tags) && tags is JObject tagsObject)
 		{
 			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
@@ -111,7 +113,7 @@ public class CS2_Tags : BasePlugin
 
 				Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
 
-				if (info.GetArg(1).StartsWith("!"))
+				if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("/"))
 				{
 					CBasePlayerPawn pawn = new CBasePlayerPawn(NativeAPI.GetEntityFromIndex((int)player.EntityIndex!.Value.Value));
 					var playerIndex = (int)pawn.Controller.Value.EntityIndex!.Value.Value;
@@ -139,7 +141,7 @@ public class CS2_Tags : BasePlugin
 
 							Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
 
-							if (info.GetArg(1).StartsWith("!"))
+							if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("/"))
 							{
 								CBasePlayerPawn pawn = new CBasePlayerPawn(NativeAPI.GetEntityFromIndex((int)player.EntityIndex!.Value.Value));
 								var playerIndex = (int)pawn.Controller.Value.EntityIndex!.Value.Value;
