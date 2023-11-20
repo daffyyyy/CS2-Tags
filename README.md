@@ -29,3 +29,6 @@ Adds tags to the server that can be easily edited, tags can be assigned via perm
 }
 ```
 In addons/counterstrikesharp/plugins/CS2-Tags/tags.json
+
+### TODO
+- Apply tags in team chat
