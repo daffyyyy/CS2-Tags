@@ -101,7 +101,7 @@ public class CS2_Tags : BasePlugin
 		if (player == null || !player.IsValid) return HookResult.Continue;
 		string steamid = new SteamID(player.SteamID).SteamId64.ToString();
 
-		if (info.GetArg(1) == "rtv") return HookResult.Continue;
+		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("/") || info.GetArg(1) == "rtv") return HookResult.Continue;
 
 		if (JsonTags != null && JsonTags.TryGetValue("tags", out var tags) && tags is JObject tagsObject)
 		{
@@ -113,13 +113,15 @@ public class CS2_Tags : BasePlugin
 
 				Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
 
+				/* Temp fix for commands OLD
 				if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("/"))
 				{
 					CBasePlayerPawn pawn = new CBasePlayerPawn(NativeAPI.GetEntityFromIndex((int)player.EntityIndex!.Value.Value));
-					var playerIndex = (int)pawn.Controller.Value.EntityIndex!.Value.Value;
+					int playerIndex = (int)pawn.Controller.Value.EntityIndex!.Value.Value;
 
 					NativeAPI.IssueClientCommand(playerIndex, $"css_{info.GetArg(1).Replace("!", "")}");
 				}
+				*/
 
 				return HookResult.Handled;
 			}
@@ -140,14 +142,6 @@ public class CS2_Tags : BasePlugin
 							string messageColor = permissionTag["message_color"]?.ToString() ?? "";
 
 							Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
-
-							if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("/"))
-							{
-								CBasePlayerPawn pawn = new CBasePlayerPawn(NativeAPI.GetEntityFromIndex((int)player.EntityIndex!.Value.Value));
-								var playerIndex = (int)pawn.Controller.Value.EntityIndex!.Value.Value;
-
-								NativeAPI.IssueClientCommand(playerIndex, $"css_{info.GetArg(1).Replace("!", "")}");
-							}
 
 							return HookResult.Handled;
 						}
