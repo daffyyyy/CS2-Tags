@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Utils;
 using Newtonsoft.Json.Linq;
+using System.Numerics;
 using System.Reflection;
 using static CounterStrikeSharp.API.Core.Listeners;
 
@@ -23,6 +24,7 @@ public class CS2_Tags : BasePlugin
 
 		RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
 		AddCommandListener("say", OnPlayerChat);
+		AddCommandListener("say_team", OnPlayerChatTeam);
 	}
 
 	private static void CreateOrLoadJsonFile(string filepath)
@@ -151,6 +153,88 @@ public class CS2_Tags : BasePlugin
 		}
 
 		return HookResult.Continue;
+	}
+
+	private HookResult OnPlayerChatTeam(CCSPlayerController? player, CommandInfo info)
+	{
+		if (player == null || !player.IsValid) return HookResult.Continue;
+		string steamid = new SteamID(player.SteamID).SteamId64.ToString();
+
+		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("/") || info.GetArg(1) == "rtv") return HookResult.Continue;
+
+		if (JsonTags != null && JsonTags.TryGetValue("tags", out var tags) && tags is JObject tagsObject)
+		{
+			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
+			{
+				string prefix = playerTag["prefix"]?.ToString() ?? "";
+				string nickColor = playerTag["nick_color"]?.ToString() ?? "";
+				string messageColor = playerTag["message_color"]?.ToString() ?? "";
+
+				for (int i = 1; i <= Server.MaxPlayers; i++)
+				{
+					CCSPlayerController? p = Utilities.GetPlayerFromIndex(i);
+					if (p == null || !p.IsValid || p.IsBot || p.TeamNum != player.TeamNum) continue;
+
+					p.PrintToChat(ReplaceTags($" {TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
+				}
+
+				return HookResult.Handled;
+			}
+
+			foreach (var tagKey in tagsObject.Properties())
+			{
+				if (tagKey.Name.StartsWith("@"))
+				{
+					string permission = tagKey.Name;
+					bool hasPermission = AdminManager.PlayerHasPermissions(player, permission);
+
+					if (hasPermission)
+					{
+						if (tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
+						{
+							string prefix = permissionTag["prefix"]?.ToString() ?? "";
+							string nickColor = permissionTag["nick_color"]?.ToString() ?? "";
+							string messageColor = permissionTag["message_color"]?.ToString() ?? "";
+
+							for (int i = 1; i <= Server.MaxPlayers; i++)
+							{
+								CCSPlayerController? p = Utilities.GetPlayerFromIndex(i);
+								if (p == null || !p.IsValid || p.IsBot || p.TeamNum != player.TeamNum) continue;
+
+								p.PrintToChat(ReplaceTags($" {TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
+							}
+
+							return HookResult.Handled;
+						}
+					}
+				}
+			}
+		}
+
+		return HookResult.Continue;
+	}
+
+	private string TeamName(int teamNum)
+	{
+		string teamName = "";
+
+		switch (teamNum)
+		{
+			case 0:
+				teamName = $"(NONE)";
+				break;
+			case 1:
+				teamName = $"(SPEC)";
+				break;
+			case 2:
+				teamName = $"{ChatColors.Gold}(T)";
+				break;
+			case 3:
+				teamName = $"{ChatColors.Blue}(CT)";
+				break;
+		}
+
+		return teamName;
 	}
 
 	private string ReplaceTags(string message)
