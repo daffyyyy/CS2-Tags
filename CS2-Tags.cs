@@ -211,7 +211,15 @@ public class CS2_Tags : BasePlugin
 			}
 		}
 
-		return HookResult.Continue;
+		for (int i = 1; i <= Server.MaxPlayers; i++)
+		{
+			CCSPlayerController? p = Utilities.GetPlayerFromIndex(i);
+			if (p == null || !p.IsValid || p.IsBot || p.TeamNum != player.TeamNum) continue;
+
+			p.PrintToChat(ReplaceTags($" {TeamName(player.TeamNum)} {ChatColors.Default}{player.PlayerName}: {info.GetArg(1)}"));
+		}
+
+		return HookResult.Handled;
 	}
 
 	private string TeamName(int teamNum)
