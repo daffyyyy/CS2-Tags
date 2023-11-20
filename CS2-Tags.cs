@@ -111,6 +111,14 @@ public class CS2_Tags : BasePlugin
 
 				Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
 
+				if (info.GetArg(1).StartsWith("!"))
+				{
+					CBasePlayerPawn pawn = new CBasePlayerPawn(NativeAPI.GetEntityFromIndex((int)player.EntityIndex!.Value.Value));
+					var playerIndex = (int)pawn.Controller.Value.EntityIndex!.Value.Value;
+
+					NativeAPI.IssueClientCommand(playerIndex, $"css_{info.GetArg(1).Replace("!", "")}");
+				}
+
 				return HookResult.Handled;
 			}
 
@@ -128,7 +136,16 @@ public class CS2_Tags : BasePlugin
 							string prefix = permissionTag["prefix"]?.ToString() ?? "";
 							string nickColor = permissionTag["nick_color"]?.ToString() ?? "";
 							string messageColor = permissionTag["message_color"]?.ToString() ?? "";
+
 							Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
+
+							if (info.GetArg(1).StartsWith("!"))
+							{
+								CBasePlayerPawn pawn = new CBasePlayerPawn(NativeAPI.GetEntityFromIndex((int)player.EntityIndex!.Value.Value));
+								var playerIndex = (int)pawn.Controller.Value.EntityIndex!.Value.Value;
+
+								NativeAPI.IssueClientCommand(playerIndex, $"css_{info.GetArg(1).Replace("!", "")}");
+							}
 
 							return HookResult.Handled;
 						}
