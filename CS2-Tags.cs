@@ -88,6 +88,7 @@ public class CS2_Tags : BasePlugin
 						if (tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
 						{
 							player.Clan = permissionTag["prefix"]?.ToString() ?? "";
+							break;
 						}
 					}
 				}
