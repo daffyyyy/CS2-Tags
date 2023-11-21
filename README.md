@@ -6,7 +6,10 @@
 ### Description
 Adds tags to the server that can be easily edited, tags can be assigned via permission or steamid64
 
-### Confiugration
+### Commands
+- css_tags_reload - Reload tags config
+
+### Configuration
 ```
 {
   "tags": {
@@ -58,6 +61,8 @@ In addons/counterstrikesharp/plugins/CS2-Tags/tags.json
         public static char Magenta = '\x0E';
         public static char LightRed = '\x0F';
 ```
+
+```{TEAMCOLOR} - Team color```
 Use color name for e.g. {LightRed}
 
 ### TODO

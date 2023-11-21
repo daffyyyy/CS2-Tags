@@ -107,13 +107,15 @@ public class CS2_Tags : BasePlugin
 
 		if (JsonTags != null && JsonTags.TryGetValue("tags", out var tags) && tags is JObject tagsObject)
 		{
+			string deadIcon = !player.PawnIsAlive ? $"{ChatColors.White}☠ {ChatColors.Default}" : "";
+
 			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
 			{
 				string prefix = playerTag["prefix"]?.ToString() ?? "";
 				string? nickColor = !string.IsNullOrEmpty(playerTag?["nick_color"]?.ToString()) ? playerTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
 				string messageColor = playerTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
 
-				Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
+				Server.PrintToChatAll(ReplaceTags($" {deadIcon}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
 
 				/* Temp fix for commands OLD
 				if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("/"))
@@ -143,7 +145,7 @@ public class CS2_Tags : BasePlugin
 							string? nickColor = !string.IsNullOrEmpty(permissionTag?["nick_color"]?.ToString()) ? permissionTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
 							string messageColor = permissionTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
 
-							Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
+							Server.PrintToChatAll(ReplaceTags($" {deadIcon}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
 
 							return HookResult.Handled;
 						}
@@ -157,7 +159,7 @@ public class CS2_Tags : BasePlugin
 				string? nickColor = !string.IsNullOrEmpty(everyoneTag?["nick_color"]?.ToString()) ? everyoneTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
 				string messageColor = everyoneTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
 
-				Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
+				Server.PrintToChatAll(ReplaceTags($" {deadIcon}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
 
 				return HookResult.Handled;
 			}
