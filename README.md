@@ -61,4 +61,4 @@ In addons/counterstrikesharp/plugins/CS2-Tags/tags.json
 Use color name for e.g. {LightRed}
 
 ### TODO
-- Apply tags in team chat
+- Thinking about better fix for commands handling
