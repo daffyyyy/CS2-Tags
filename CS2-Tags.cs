@@ -16,7 +16,7 @@ public class CS2_Tags : BasePlugin
 	public override string ModuleName => "CS2-Tags";
 	public override string ModuleDescription => "Add player tags easily in cs2 game";
 	public override string ModuleAuthor => "daffyy";
-	public override string ModuleVersion => "1.0.0";
+	public override string ModuleVersion => "1.0.2";
 
 	public override void Load(bool hotReload)
 	{
@@ -49,6 +49,13 @@ public class CS2_Tags : BasePlugin
 						["message_color"] = "{GOLD}",
 						["scoreboard"] = "[ADMIN]"
 					},
+					["everyone"] = new JObject
+					{
+						["prefix"] = "{Grey}[Player]",
+						["nick_color"] = "",
+						["message_color"] = "",
+						["scoreboard"] = "[Player]"
+					},
 				}
 			};
 
@@ -67,7 +74,7 @@ public class CS2_Tags : BasePlugin
 	{
 		CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
 
-		if (player == null || !player.IsValid) return;
+		if (player == null || !player.IsValid || player.IsBot) return;
 
 		string steamid = new SteamID(player.SteamID).SteamId64.ToString();
 
@@ -76,6 +83,7 @@ public class CS2_Tags : BasePlugin
 			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
 			{
 				player.Clan = playerTag["scoreboard"]?.ToString() ?? "";
+				return;
 			}
 
 			foreach (var tagKey in tagsObject.Properties())
@@ -89,12 +97,17 @@ public class CS2_Tags : BasePlugin
 					{
 						if (tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
 						{
-							player.Clan = permissionTag["prefix"]?.ToString() ?? "";
-							break;
+							player.Clan = permissionTag["scoreboard"]?.ToString() ?? "";
+							return;
 						}
 					}
 				}
 			}
+		}
+
+		if (JsonTags != null && JsonTags["tags"]?["everyone"]?["scoreboard"] != null)
+		{
+			player.Clan = JsonTags?["tags"]?["everyone"]?["scoreboard"]?.ToString() ?? "";
 		}
 	}
 
@@ -110,8 +123,8 @@ public class CS2_Tags : BasePlugin
 			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
 			{
 				string prefix = playerTag["prefix"]?.ToString() ?? "";
-				string nickColor = playerTag["nick_color"]?.ToString() ?? "";
-				string messageColor = playerTag["message_color"]?.ToString() ?? "";
+				string? nickColor = !string.IsNullOrEmpty(playerTag?["nick_color"]?.ToString()) ? playerTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
+				string messageColor = playerTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
 
 				Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
 
@@ -140,8 +153,8 @@ public class CS2_Tags : BasePlugin
 						if (tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
 						{
 							string prefix = permissionTag["prefix"]?.ToString() ?? "";
-							string nickColor = permissionTag["nick_color"]?.ToString() ?? "";
-							string messageColor = permissionTag["message_color"]?.ToString() ?? "";
+							string? nickColor = !string.IsNullOrEmpty(permissionTag?["nick_color"]?.ToString()) ? permissionTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
+							string messageColor = permissionTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
 
 							Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
 
@@ -150,7 +163,19 @@ public class CS2_Tags : BasePlugin
 					}
 				}
 			}
+
+			if (tagsObject.TryGetValue("everyone", out var everyoneTag) && everyoneTag is JObject)
+			{
+				string prefix = everyoneTag["prefix"]?.ToString() ?? "";
+				string? nickColor = !string.IsNullOrEmpty(everyoneTag?["nick_color"]?.ToString()) ? everyoneTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
+				string messageColor = everyoneTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
+
+				Server.PrintToChatAll(ReplaceTags($" {prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
+
+				return HookResult.Handled;
+			}
 		}
+
 
 		return HookResult.Continue;
 	}
@@ -167,8 +192,8 @@ public class CS2_Tags : BasePlugin
 			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
 			{
 				string prefix = playerTag["prefix"]?.ToString() ?? "";
-				string nickColor = playerTag["nick_color"]?.ToString() ?? "";
-				string messageColor = playerTag["message_color"]?.ToString() ?? "";
+				string? nickColor = !string.IsNullOrEmpty(playerTag?["nick_color"]?.ToString()) ? playerTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
+				string messageColor = playerTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
 
 				for (int i = 1; i <= Server.MaxPlayers; i++)
 				{
@@ -193,8 +218,8 @@ public class CS2_Tags : BasePlugin
 						if (tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
 						{
 							string prefix = permissionTag["prefix"]?.ToString() ?? "";
-							string nickColor = permissionTag["nick_color"]?.ToString() ?? "";
-							string messageColor = permissionTag["message_color"]?.ToString() ?? "";
+							string? nickColor = !string.IsNullOrEmpty(permissionTag?["nick_color"]?.ToString()) ? permissionTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
+							string messageColor = permissionTag["message_color"]?.ToString() ?? $"{ChatColors.Default}"; ;
 
 							for (int i = 1; i <= Server.MaxPlayers; i++)
 							{
@@ -209,6 +234,24 @@ public class CS2_Tags : BasePlugin
 					}
 				}
 			}
+
+			if (tagsObject.TryGetValue("everyone", out var everyoneTag) && everyoneTag is JObject)
+			{
+				string prefix = everyoneTag["prefix"]?.ToString() ?? "";
+				string? nickColor = !string.IsNullOrEmpty(everyoneTag?["nick_color"]?.ToString()) ? everyoneTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
+				string messageColor = everyoneTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
+
+				for (int i = 1; i <= Server.MaxPlayers; i++)
+				{
+					CCSPlayerController? p = Utilities.GetPlayerFromIndex(i);
+					if (p == null || !p.IsValid || p.IsBot || p.TeamNum != player.TeamNum) continue;
+
+					p.PrintToChat(ReplaceTags($" {TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}"));
+				}
+
+				return HookResult.Handled;
+			}
+
 		}
 
 		for (int i = 1; i <= Server.MaxPlayers; i++)

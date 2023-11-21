@@ -16,17 +16,17 @@ Adds tags to the server that can be easily edited, tags can be assigned via perm
       "message_color": "{GOLD}", // Message nick color
       "scoreboard": "[ADMIN]" // Scoreboard tag
     },
-    "@css/ban": {
-      "prefix": "{GREEN}[ADMIN]",
-      "nick_color": "{RED}",
-      "message_color": "{GOLD}",
-      "scoreboard": "[ADMIN]"
-    },
     "76561198202892670": { // SteamID64
       "prefix": "{GREEN}[ADMIN]",
       "nick_color": "{RED}",
       "message_color": "{GOLD}",
       "scoreboard": "[ADMIN]"
+    },
+    "everyone": { // Tag for everyone, bots excluded
+      "prefix": "",
+      "nick_color": "",
+      "message_color": "",
+      "scoreboard": "[Player]"
     }
   }
 }
