@@ -13,6 +13,12 @@ Adds tags to the server that can be easily edited, tags can be assigned via perm
 ```
 {
   "tags": {
+    "#css/admin": { // Permission 
+      "prefix": "{GREEN}[ADMIN]", // Chat prefix
+      "nick_color": "{RED}", // Nick color
+      "message_color": "{GOLD}", // Message nick color
+      "scoreboard": "[ADMIN]" // Scoreboard tag
+    },
     "@css/chat": { // Permission 
       "prefix": "{GREEN}[ADMIN]", // Chat prefix
       "nick_color": "{RED}", // Nick color
