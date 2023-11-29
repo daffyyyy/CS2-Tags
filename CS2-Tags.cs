@@ -7,6 +7,7 @@ using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Utils;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
+using static CounterStrikeSharp.API.Core.Listeners;
 
 namespace CS2_Tags;
 public class CS2_Tags : BasePlugin
@@ -22,7 +23,10 @@ public class CS2_Tags : BasePlugin
 		CreateOrLoadJsonFile(ModuleDirectory + "/tags.json");
 
 		RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
+		RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
+		//RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
 		RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawn);
+		RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
 		AddCommandListener("say", OnPlayerChat);
 		AddCommandListener("say_team", OnPlayerChatTeam);
 	}
@@ -35,6 +39,13 @@ public class CS2_Tags : BasePlugin
 			{
 				["tags"] = new JObject
 				{
+					["#css/admin"] = new JObject
+					{
+						["prefix"] = "{RED}[ADMIN]",
+						["nick_color"] = "{RED}",
+						["message_color"] = "{GOLD}",
+						["scoreboard"] = "[ADMIN]"
+					},
 					["@css/chat"] = new JObject
 					{
 						["prefix"] = "{GREEN}[CHAT]",
@@ -44,7 +55,7 @@ public class CS2_Tags : BasePlugin
 					},
 					["76561197961430531"] = new JObject
 					{
-						["prefix"] = "{GREEN}[ADMIN]",
+						["prefix"] = "{RED}[ADMIN]",
 						["nick_color"] = "{RED}",
 						["message_color"] = "{GOLD}",
 						["scoreboard"] = "[ADMIN]"
@@ -75,6 +86,8 @@ public class CS2_Tags : BasePlugin
 	{
 		if (player != null) return;
 		CreateOrLoadJsonFile(ModuleDirectory + "/tags.json");
+
+		Server.PrintToConsole("[CS2-Tags] Config reloaded!");
 	}
 
 	private void OnClientAuthorized(int playerSlot, SteamID steamId)
@@ -84,6 +97,16 @@ public class CS2_Tags : BasePlugin
 		if (player == null || !player.IsValid || player.IsBot) return;
 
 		AddTimer(1.0f, () => SetPlayerClanTag(player));
+	}
+	private HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
+	{
+		CCSPlayerController? player = @event.Userid;
+
+		if (player == null || !player.IsValid || player.IsBot) return HookResult.Continue;
+
+		AddTimer(3.0f, () => SetPlayerClanTag(player));
+
+		return HookResult.Continue;
 	}
 
 	private HookResult OnPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)
@@ -95,6 +118,17 @@ public class CS2_Tags : BasePlugin
 
 		return HookResult.Continue;
 	}
+
+	private HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
+	{
+		CCSPlayerController? player = @event.Userid;
+		if (player == null || !player.IsValid || player.IsBot) return HookResult.Continue;
+
+		AddTimer(1.0f, () => SetPlayerClanTag(player));
+
+		return HookResult.Continue;
+	}
+
 
 	private HookResult OnPlayerChat(CCSPlayerController? player, CommandInfo info)
 	{
@@ -127,8 +161,6 @@ public class CS2_Tags : BasePlugin
 
 				return HookResult.Handled;
 			}
-
-
 
 			foreach (var tagKey in tagsObject.Properties())
 			{
