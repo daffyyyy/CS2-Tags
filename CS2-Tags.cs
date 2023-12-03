@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Utils;
+using MySqlConnector;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
 using static CounterStrikeSharp.API.Core.Listeners;
@@ -12,6 +13,7 @@ using static CounterStrikeSharp.API.Core.Listeners;
 namespace CS2_Tags;
 public class CS2_Tags : BasePlugin
 {
+	List<string> GaggedSteamids = new List<string>();
 	public static JObject? JsonTags { get; private set; }
 	public override string ModuleName => "CS2-Tags";
 	public override string ModuleDescription => "Add player tags easily in cs2 game";
@@ -23,12 +25,62 @@ public class CS2_Tags : BasePlugin
 		CreateOrLoadJsonFile(ModuleDirectory + "/tags.json");
 
 		RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
+		RegisterListener<Listeners.OnMapStart>(OnMapStart);
 		RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
 		//RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
 		RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawn);
 		RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
 		AddCommandListener("say", OnPlayerChat);
 		AddCommandListener("say_team", OnPlayerChatTeam);
+
+		if (hotReload)
+		{
+			OnMapStart(string.Empty);
+		}
+	}
+
+	private void OnMapStart(string mapname)
+	{
+		AddTimer(30.0f, () => CS2_SimpleAdmin(), CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT | CounterStrikeSharp.API.Modules.Timers.TimerFlags.STOP_ON_MAPCHANGE);
+	}
+
+	private async void CS2_SimpleAdmin()
+	{
+		string? path = Path.GetDirectoryName(ModuleDirectory);
+		if (Directory.Exists(path + "/CS2-SimpleAdmin"))
+		{
+			string _configPath = Path.Combine(path, "../configs/plugins/CS2-SimpleAdmin/CS2-SimpleAdmin.json");
+			if (!File.Exists(_configPath))
+			{
+				return;
+			}
+			GaggedSteamids.Clear();
+			try
+			{
+				string configJson = await File.ReadAllTextAsync(_configPath);
+
+				dynamic config = JObject.Parse(configJson);
+
+				string connectionString = $"Server={config.DatabaseHost};Database={config.DatabaseName};Uid={config.DatabaseUser};Pwd={config.DatabasePassword};";
+
+				using var connection = new MySqlConnection(connectionString);
+				await connection.OpenAsync();
+
+				string query = "SELECT DISTINCT player_steamid FROM sa_mutes WHERE status = 'ACTIVE' AND type = 'GAG' AND (duration = 0 OR ends > NOW())";
+
+				using var cmd = new MySqlCommand(query, connection);
+				using MySqlDataReader reader = await cmd.ExecuteReaderAsync();
+
+				while (await reader.ReadAsync())
+				{
+					string steamID = reader.GetString("player_steamid");
+					GaggedSteamids.Add(steamID);
+				}
+			}
+			catch (Exception)
+			{
+			}
+		}
 	}
 
 	private static void CreateOrLoadJsonFile(string filepath)
@@ -133,7 +185,9 @@ public class CS2_Tags : BasePlugin
 	private HookResult OnPlayerChat(CCSPlayerController? player, CommandInfo info)
 	{
 		if (player == null || !player.IsValid || info.GetArg(1).Length == 0) return HookResult.Continue;
-		string steamid = new SteamID(player.SteamID).SteamId64.ToString();
+		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
+
+		if (GaggedSteamids.Contains(steamid)) return HookResult.Handled;
 
 		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("@") || info.GetArg(1).StartsWith("/") || info.GetArg(1).StartsWith(".") || info.GetArg(1) == "rtv") return HookResult.Continue;
 
@@ -223,7 +277,9 @@ public class CS2_Tags : BasePlugin
 	private HookResult OnPlayerChatTeam(CCSPlayerController? player, CommandInfo info)
 	{
 		if (player == null || !player.IsValid || info.GetArg(1).Length == 0) return HookResult.Continue;
-		string steamid = new SteamID(player.SteamID).SteamId64.ToString();
+		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
+
+		if (GaggedSteamids.Contains(steamid)) return HookResult.Handled;
 
 		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("@") || info.GetArg(1).StartsWith("/") || info.GetArg(1).StartsWith(".") || info.GetArg(1) == "rtv") return HookResult.Continue;
 
@@ -332,7 +388,7 @@ public class CS2_Tags : BasePlugin
 	{
 		if (player == null || !player.IsValid || player.IsBot) return;
 
-		string steamid = new SteamID(player.SteamID).SteamId64.ToString();
+		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
 
 		if (JsonTags != null && JsonTags.TryGetValue("tags", out var tags) && tags is JObject tagsObject)
 		{
