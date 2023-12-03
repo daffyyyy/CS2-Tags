@@ -1,5 +1,6 @@
 ﻿using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
@@ -9,6 +10,8 @@ using Newtonsoft.Json.Linq;
 using System.Reflection;
 
 namespace CS2_Tags;
+
+[MinimumApiVersion(98)]
 public class CS2_Tags : BasePlugin
 {
 	List<int> GaggedIds = new List<int>();
