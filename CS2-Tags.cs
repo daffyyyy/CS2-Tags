@@ -5,15 +5,13 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Entities;
 using CounterStrikeSharp.API.Modules.Utils;
-using MySqlConnector;
 using Newtonsoft.Json.Linq;
 using System.Reflection;
-using static CounterStrikeSharp.API.Core.Listeners;
 
 namespace CS2_Tags;
 public class CS2_Tags : BasePlugin
 {
-	List<string> GaggedSteamids = new List<string>();
+	List<int> GaggedIds = new List<int>();
 	public static JObject? JsonTags { get; private set; }
 	public override string ModuleName => "CS2-Tags";
 	public override string ModuleDescription => "Add player tags easily in cs2 game";
@@ -25,7 +23,7 @@ public class CS2_Tags : BasePlugin
 		CreateOrLoadJsonFile(ModuleDirectory + "/tags.json");
 
 		RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
-		RegisterListener<Listeners.OnMapStart>(OnMapStart);
+		//RegisterListener<Listeners.OnMapStart>(OnMapStart);
 		RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
 		//RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
 		RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawn);
@@ -41,9 +39,10 @@ public class CS2_Tags : BasePlugin
 
 	private void OnMapStart(string mapname)
 	{
-		AddTimer(30.0f, () => CS2_SimpleAdmin(), CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT | CounterStrikeSharp.API.Modules.Timers.TimerFlags.STOP_ON_MAPCHANGE);
+		//AddTimer(30.0f, () => CS2_SimpleAdmin(), CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT | CounterStrikeSharp.API.Modules.Timers.TimerFlags.STOP_ON_MAPCHANGE);
 	}
 
+	/*
 	private async void CS2_SimpleAdmin()
 	{
 		string? path = Path.GetDirectoryName(ModuleDirectory);
@@ -82,6 +81,7 @@ public class CS2_Tags : BasePlugin
 			}
 		}
 	}
+	*/
 
 	private static void CreateOrLoadJsonFile(string filepath)
 	{
@@ -142,13 +142,41 @@ public class CS2_Tags : BasePlugin
 		Server.PrintToConsole("[CS2-Tags] Config reloaded!");
 	}
 
+	[ConsoleCommand("css_tag_mute")]
+	[CommandHelper(minArgs: 1, usage: "<Index>", whoCanExecute: CommandUsage.SERVER_ONLY)]
+	public void OnTagMuteCommand(CCSPlayerController? caller, CommandInfo command)
+	{
+		int index = 0;
+		int.TryParse(command.GetArg(1), out index);
+
+		if (index == 0)
+			return;
+
+		if (!GaggedIds.Contains(index))
+			GaggedIds.Add(index);
+	}
+
+	[ConsoleCommand("css_tag_unmute")]
+	[CommandHelper(minArgs: 1, usage: "<Index>", whoCanExecute: CommandUsage.SERVER_ONLY)]
+	public void OnTagUnMuteCommand(CCSPlayerController? caller, CommandInfo command)
+	{
+		int index = 0;
+		int.TryParse(command.GetArg(1), out index);
+
+		if (index == 0)
+			return;
+
+		if (GaggedIds.Contains(index))
+			GaggedIds.Remove(index);
+	}
+
 	private void OnClientAuthorized(int playerSlot, SteamID steamId)
 	{
 		CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
 
 		if (player == null || !player.IsValid || player.IsBot) return;
 
-		AddTimer(1.0f, () => SetPlayerClanTag(player));
+		AddTimer(3.0f, () => SetPlayerClanTag(player));
 	}
 	private HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
 	{
@@ -156,7 +184,7 @@ public class CS2_Tags : BasePlugin
 
 		if (player == null || !player.IsValid || player.IsBot) return HookResult.Continue;
 
-		AddTimer(3.0f, () => SetPlayerClanTag(player));
+		AddTimer(4.0f, () => SetPlayerClanTag(player));
 
 		return HookResult.Continue;
 	}
@@ -187,7 +215,7 @@ public class CS2_Tags : BasePlugin
 		if (player == null || !player.IsValid || info.GetArg(1).Length == 0) return HookResult.Continue;
 		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
 
-		if (GaggedSteamids.Contains(steamid)) return HookResult.Handled;
+		if (GaggedIds.Contains((int)player.Index)) return HookResult.Handled;
 
 		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("@") || info.GetArg(1).StartsWith("/") || info.GetArg(1).StartsWith(".") || info.GetArg(1) == "rtv") return HookResult.Continue;
 
@@ -279,7 +307,7 @@ public class CS2_Tags : BasePlugin
 		if (player == null || !player.IsValid || info.GetArg(1).Length == 0) return HookResult.Continue;
 		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
 
-		if (GaggedSteamids.Contains(steamid)) return HookResult.Handled;
+		if (GaggedIds.Contains((int)player.Index)) return HookResult.Handled;
 
 		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("@") || info.GetArg(1).StartsWith("/") || info.GetArg(1).StartsWith(".") || info.GetArg(1) == "rtv") return HookResult.Continue;
 
@@ -386,7 +414,7 @@ public class CS2_Tags : BasePlugin
 
 	private void SetPlayerClanTag(CCSPlayerController? player)
 	{
-		if (player == null || !player.IsValid || player.IsBot) return;
+		if (player == null || !player.IsValid || player.IsBot || player.AuthorizedSteamID == null) return;
 
 		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
 
