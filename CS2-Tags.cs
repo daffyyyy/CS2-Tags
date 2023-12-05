@@ -19,7 +19,7 @@ public class CS2_Tags : BasePlugin
 	public override string ModuleName => "CS2-Tags";
 	public override string ModuleDescription => "Add player tags easily in cs2 game";
 	public override string ModuleAuthor => "daffyy";
-	public override string ModuleVersion => "1.0.2";
+	public override string ModuleVersion => "1.0.3";
 
 	public override void Load(bool hotReload)
 	{
@@ -179,8 +179,9 @@ public class CS2_Tags : BasePlugin
 
 		if (player == null || !player.IsValid || player.IsBot) return;
 
-		AddTimer(3.0f, () => SetPlayerClanTag(player));
+		AddTimer(2.5f, () => SetPlayerClanTag(player));
 	}
+
 	private HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
 	{
 		CCSPlayerController? player = @event.Userid;
@@ -229,20 +230,10 @@ public class CS2_Tags : BasePlugin
 			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
 			{
 				string prefix = playerTag["prefix"]?.ToString() ?? "";
-				string? nickColor = !string.IsNullOrEmpty(playerTag?["nick_color"]?.ToString()) ? playerTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
-				string messageColor = playerTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
+				string nickColor = playerTag?["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
+				string messageColor = playerTag?["message_color"]?.ToString() ?? ChatColors.Default.ToString();
 
 				Server.PrintToChatAll(ReplaceTags($" {deadIcon}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
-
-				/* Temp fix for commands OLD
-				if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("/"))
-				{
-					CBasePlayerPawn pawn = new CBasePlayerPawn(NativeAPI.GetEntityFromIndex((int)player.EntityIndex!.Value.Value));
-					int playerIndex = (int)pawn.Controller.Value.EntityIndex!.Value.Value;
-
-					NativeAPI.IssueClientCommand(playerIndex, $"css_{info.GetArg(1).Replace("!", "")}");
-				}
-				*/
 
 				return HookResult.Handled;
 			}
@@ -259,8 +250,8 @@ public class CS2_Tags : BasePlugin
 						if (tagsObject.TryGetValue(group, out var groupTag) && groupTag is JObject)
 						{
 							string prefix = groupTag["prefix"]?.ToString() ?? "";
-							string? nickColor = !string.IsNullOrEmpty(groupTag?["nick_color"]?.ToString()) ? groupTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
-							string messageColor = groupTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
+							string nickColor = groupTag?["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
+							string messageColor = groupTag?["message_color"]?.ToString() ?? ChatColors.Default.ToString();
 
 							Server.PrintToChatAll(ReplaceTags($" {deadIcon}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
 
@@ -279,8 +270,8 @@ public class CS2_Tags : BasePlugin
 						if (tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
 						{
 							string prefix = permissionTag["prefix"]?.ToString() ?? "";
-							string? nickColor = !string.IsNullOrEmpty(permissionTag?["nick_color"]?.ToString()) ? permissionTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
-							string messageColor = permissionTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
+							string nickColor = permissionTag?["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
+							string messageColor = permissionTag?["message_color"]?.ToString() ?? ChatColors.Default.ToString();
 
 							Server.PrintToChatAll(ReplaceTags($" {deadIcon}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
 
@@ -293,8 +284,8 @@ public class CS2_Tags : BasePlugin
 			if (tagsObject.TryGetValue("everyone", out var everyoneTag) && everyoneTag is JObject)
 			{
 				string prefix = everyoneTag["prefix"]?.ToString() ?? "";
-				string? nickColor = !string.IsNullOrEmpty(everyoneTag?["nick_color"]?.ToString()) ? everyoneTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
-				string messageColor = everyoneTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
+				string nickColor = everyoneTag?["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
+				string messageColor = everyoneTag?["message_color"]?.ToString() ?? ChatColors.Default.ToString();
 
 				Server.PrintToChatAll(ReplaceTags($" {deadIcon}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", player.TeamNum));
 
@@ -320,15 +311,13 @@ public class CS2_Tags : BasePlugin
 			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
 			{
 				string prefix = playerTag["prefix"]?.ToString() ?? "";
-				string? nickColor = !string.IsNullOrEmpty(playerTag?["nick_color"]?.ToString()) ? playerTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
-				string messageColor = playerTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
+				string nickColor = playerTag?["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
+				string messageColor = playerTag?["message_color"]?.ToString() ?? ChatColors.Default.ToString();
 
-				for (int i = 1; i <= Server.MaxPlayers; i++)
+				foreach (var p in Utilities.GetPlayers().Where(p => p.TeamNum == player.TeamNum && p.IsValid && !p.IsBot))
 				{
-					CCSPlayerController? p = Utilities.GetPlayerFromIndex(i);
-					if (p == null || !p.IsValid || p.IsBot || p.TeamNum != player.TeamNum) continue;
-
-					p.PrintToChat(ReplaceTags($" {deadIcon}{TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", p.TeamNum));
+					string messageToSend = $"{deadIcon}{TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}";
+					p.PrintToChat($" {ReplaceTags(messageToSend, p.TeamNum)}");
 				}
 
 				return HookResult.Handled;
@@ -341,24 +330,19 @@ public class CS2_Tags : BasePlugin
 					string group = tagKey.Name;
 					bool inGroup = AdminManager.PlayerInGroup(player, group);
 
-					if (inGroup)
+					if (inGroup && tagsObject.TryGetValue(group, out var groupTag) && groupTag is JObject)
 					{
-						if (tagsObject.TryGetValue(group, out var groupTag) && groupTag is JObject)
+						string prefix = groupTag["prefix"]?.ToString() ?? "";
+						string nickColor = groupTag["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
+						string messageColor = groupTag["message_color"]?.ToString() ?? ChatColors.Default.ToString();
+
+						foreach (var p in Utilities.GetPlayers().Where(p => p.TeamNum == player.TeamNum && p.IsValid && !p.IsBot))
 						{
-							string prefix = groupTag["prefix"]?.ToString() ?? "";
-							string? nickColor = !string.IsNullOrEmpty(groupTag?["nick_color"]?.ToString()) ? groupTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
-							string messageColor = groupTag["message_color"]?.ToString() ?? $"{ChatColors.Default}"; ;
-
-							for (int i = 1; i <= Server.MaxPlayers; i++)
-							{
-								CCSPlayerController? p = Utilities.GetPlayerFromIndex(i);
-								if (p == null || !p.IsValid || p.IsBot || p.TeamNum != player.TeamNum) continue;
-
-								p.PrintToChat(ReplaceTags($" {deadIcon}{TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", p.TeamNum));
-							}
-
-							return HookResult.Handled;
+							string messageToSend = $"{deadIcon}{TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}";
+							p.PrintToChat($" {ReplaceTags(messageToSend, p.TeamNum)}");
 						}
+
+						return HookResult.Handled;
 					}
 				}
 
@@ -367,24 +351,19 @@ public class CS2_Tags : BasePlugin
 					string permission = tagKey.Name;
 					bool hasPermission = AdminManager.PlayerHasPermissions(player, permission);
 
-					if (hasPermission)
+					if (hasPermission && tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
 					{
-						if (tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
+						string prefix = permissionTag["prefix"]?.ToString() ?? "";
+						string nickColor = permissionTag["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
+						string messageColor = permissionTag["message_color"]?.ToString() ?? ChatColors.Default.ToString();
+
+						foreach (var p in Utilities.GetPlayers().Where(p => p.TeamNum == player.TeamNum && p.IsValid && !p.IsBot))
 						{
-							string prefix = permissionTag["prefix"]?.ToString() ?? "";
-							string? nickColor = !string.IsNullOrEmpty(permissionTag?["nick_color"]?.ToString()) ? permissionTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
-							string messageColor = permissionTag["message_color"]?.ToString() ?? $"{ChatColors.Default}"; ;
-
-							for (int i = 1; i <= Server.MaxPlayers; i++)
-							{
-								CCSPlayerController? p = Utilities.GetPlayerFromIndex(i);
-								if (p == null || !p.IsValid || p.IsBot || p.TeamNum != player.TeamNum) continue;
-
-								p.PrintToChat(ReplaceTags($" {deadIcon}{TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", p.TeamNum));
-							}
-
-							return HookResult.Handled;
+							string messageToSend = $"{deadIcon}{TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}";
+							p.PrintToChat($" {ReplaceTags(messageToSend, p.TeamNum)}");
 						}
+
+						return HookResult.Handled;
 					}
 				}
 			}
@@ -417,7 +396,7 @@ public class CS2_Tags : BasePlugin
 
 	private void SetPlayerClanTag(CCSPlayerController? player)
 	{
-		if (player == null || !player.IsValid || player.IsBot || player.AuthorizedSteamID == null) return;
+		if (player == null || !player.IsValid || player.IsBot || player.IsHLTV || player.AuthorizedSteamID == null) return;
 
 		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
 
@@ -425,8 +404,12 @@ public class CS2_Tags : BasePlugin
 		{
 			if (tagsObject.TryGetValue(steamid, out var playerTag) && playerTag is JObject)
 			{
-				player.Clan = playerTag["scoreboard"]?.ToString() ?? "";
-				return;
+				var scoreboardValue = playerTag["scoreboard"]?.ToString();
+				if (!string.IsNullOrEmpty(scoreboardValue))
+				{
+					player.Clan = scoreboardValue;
+					return;
+				}
 			}
 
 			foreach (var tagKey in tagsObject.Properties())
@@ -440,8 +423,12 @@ public class CS2_Tags : BasePlugin
 					{
 						if (tagsObject.TryGetValue(group, out var groupTag) && groupTag is JObject)
 						{
-							player.Clan = groupTag["scoreboard"]?.ToString() ?? "";
-							return;
+							var scoreboardValue = groupTag["scoreboard"]?.ToString();
+							if (!string.IsNullOrEmpty(scoreboardValue))
+							{
+								player.Clan = scoreboardValue;
+								return;
+							}
 						}
 					}
 				}
@@ -455,16 +442,24 @@ public class CS2_Tags : BasePlugin
 					{
 						if (tagsObject.TryGetValue(permission, out var permissionTag) && permissionTag is JObject)
 						{
-							player.Clan = permissionTag["scoreboard"]?.ToString() ?? "";
-							return;
+							var scoreboardValue = permissionTag["scoreboard"]?.ToString();
+							if (!string.IsNullOrEmpty(scoreboardValue))
+							{
+								player.Clan = scoreboardValue;
+								return;
+							}
 						}
 					}
 				}
 			}
 
-			if (JsonTags != null && JsonTags["tags"]?["everyone"]?["scoreboard"] != null)
+			if (tagsObject.TryGetValue("everyone", out var everyone) && everyone is JObject everyoneObject)
 			{
-				player.Clan = JsonTags?["tags"]?["everyone"]?["scoreboard"]?.ToString() ?? "";
+				var scoreboardValue = everyoneObject["scoreboard"]?.ToString();
+				if (!string.IsNullOrEmpty(scoreboardValue))
+				{
+					player.Clan = scoreboardValue;
+				}
 			}
 		}
 	}
@@ -482,7 +477,7 @@ public class CS2_Tags : BasePlugin
 				teamName = $"(SPEC)";
 				break;
 			case 2:
-				teamName = $"{ChatColors.Gold}(T)";
+				teamName = $"{ChatColors.Yellow}(T)";
 				break;
 			case 3:
 				teamName = $"{ChatColors.Blue}(CT)";
