@@ -308,7 +308,8 @@ public class CS2_Tags : BasePlugin
 			{
 				p.PrintToChat($" {ChatColors.Lime}(ADMIN) {ChatColors.Default}{player.PlayerName}: {info.GetArg(1)}");
 			}
-			return HookResult.Continue;
+
+			return HookResult.Handled;
 		}
 
 		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("@") || info.GetArg(1).StartsWith("/") || info.GetArg(1).StartsWith(".") || info.GetArg(1) == "rtv") return HookResult.Continue;
