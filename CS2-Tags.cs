@@ -117,6 +117,7 @@ public class CS2_Tags : BasePlugin
 					},
 					["everyone"] = new JObject
 					{
+						["team_chat"] = false,
 						["prefix"] = "{Grey}[Player]",
 						["nick_color"] = "",
 						["message_color"] = "",
@@ -280,7 +281,7 @@ public class CS2_Tags : BasePlugin
 				}
 			}
 
-			if (tagsObject.TryGetValue("everyone", out var everyoneTag) && everyoneTag is JObject)
+			if (tagsObject.TryGetValue("everyone", out var everyoneTag) && everyoneTag is JObject && everyoneTag?["team_chat"]?.Value<bool>() == true)
 			{
 				string prefix = everyoneTag["prefix"]?.ToString() ?? "";
 				string nickColor = everyoneTag?["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
@@ -377,28 +378,21 @@ public class CS2_Tags : BasePlugin
 				}
 			}
 
-			/*
 			if (tagsObject.TryGetValue("everyone", out var everyoneTag) && everyoneTag is JObject)
 			{
 				string prefix = everyoneTag["prefix"]?.ToString() ?? "";
-				string? nickColor = !string.IsNullOrEmpty(everyoneTag?["nick_color"]?.ToString()) ? everyoneTag?["nick_color"]?.ToString() : $"{ChatColors.Default}";
-				string messageColor = everyoneTag?["message_color"]?.ToString() ?? $"{ChatColors.Default}";
+				string nickColor = everyoneTag["nick_color"]?.ToString() ?? ChatColors.Default.ToString();
+				string messageColor = everyoneTag["message_color"]?.ToString() ?? ChatColors.Default.ToString();
 
-				for (int i = 1; i <= Server.MaxPlayers; i++)
+				foreach (var p in Utilities.GetPlayers().Where(p => p.TeamNum == player.TeamNum && p.IsValid && !p.IsBot))
 				{
-					CCSPlayerController? p = Utilities.GetPlayerFromIndex(i);
-					if (p == null || !p.IsValid || p.IsBot || p.TeamNum != player.TeamNum) continue;
-
-					p.PrintToChat(ReplaceTags($" {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", p.TeamNum));
-
-					//p.PrintToChat(ReplaceTags($" {TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", p.TeamNum));
+					string messageToSend = $"{deadIcon}{TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}";
 				}
-			
+				//p.PrintToChat(ReplaceTags($" {TeamName(player.TeamNum)} {ChatColors.Default}{prefix}{nickColor}{player.PlayerName}{ChatColors.Default}: {messageColor}{info.GetArg(1)}", p.TeamNum));
 
 				return HookResult.Handled;
 			}
-		}
-			*/
+
 		}
 		return HookResult.Continue;
 	}
