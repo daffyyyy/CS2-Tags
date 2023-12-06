@@ -213,7 +213,6 @@ public class CS2_Tags : BasePlugin
 		return HookResult.Continue;
 	}
 
-
 	private HookResult OnPlayerChat(CCSPlayerController? player, CommandInfo info)
 	{
 		if (player == null || !player.IsValid || info.GetArg(1).Length == 0) return HookResult.Continue;
@@ -302,6 +301,15 @@ public class CS2_Tags : BasePlugin
 		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
 
 		if (GaggedIds.Contains((int)player.Index)) return HookResult.Handled;
+
+		if (info.GetArg(1).StartsWith("@") && AdminManager.PlayerHasPermissions(player, "@css/chat"))
+		{
+			foreach (var p in Utilities.GetPlayers().Where(p => p.IsValid && !p.IsBot && !p.IsHLTV && AdminManager.PlayerHasPermissions(p, "@css/chat")))
+			{
+				p.PrintToChat($" {ChatColors.Lime}(ADMIN) {ChatColors.Default}{player.PlayerName}: {info.GetArg(1)}");
+			}
+			return HookResult.Continue;
+		}
 
 		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("@") || info.GetArg(1).StartsWith("/") || info.GetArg(1).StartsWith(".") || info.GetArg(1) == "rtv") return HookResult.Continue;
 
