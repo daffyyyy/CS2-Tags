@@ -43,7 +43,7 @@ Adds tags to the server that can be easily edited, tags can be assigned via perm
 In addons/counterstrikesharp/plugins/CS2-Tags/tags.json
 
 ### Requirments
-[CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp/) **tested on v61**
+[CounterStrikeSharp](https://github.com/roflmuffin/CounterStrikeSharp/) **tested on v142**
 
 ### Colors
 ```
