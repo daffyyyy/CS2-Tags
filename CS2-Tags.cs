@@ -11,10 +11,10 @@ using System.Reflection;
 
 namespace CS2_Tags;
 
-[MinimumApiVersion(98)]
+[MinimumApiVersion(142)]
 public class CS2_Tags : BasePlugin
 {
-	List<int> GaggedIds = new List<int>();
+	private List<int> GaggedIds = new List<int>();
 	public static JObject? JsonTags { get; private set; }
 	public override string ModuleName => "CS2-Tags";
 	public override string ModuleDescription => "Add player tags easily in cs2 game";
@@ -26,65 +26,13 @@ public class CS2_Tags : BasePlugin
 		CreateOrLoadJsonFile(ModuleDirectory + "/tags.json");
 
 		RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
-		//RegisterListener<Listeners.OnMapStart>(OnMapStart);
 		RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
-		//RegisterListener<Listeners.OnClientPutInServer>(OnClientPutInServer);
 		RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawn);
 		RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
 		AddCommandListener("say", OnPlayerChat);
 		AddCommandListener("say_team", OnPlayerChatTeam);
 
-		if (hotReload)
-		{
-			OnMapStart(string.Empty);
-		}
 	}
-
-	private void OnMapStart(string mapname)
-	{
-		//AddTimer(30.0f, () => CS2_SimpleAdmin(), CounterStrikeSharp.API.Modules.Timers.TimerFlags.REPEAT | CounterStrikeSharp.API.Modules.Timers.TimerFlags.STOP_ON_MAPCHANGE);
-	}
-
-	/*
-	private async void CS2_SimpleAdmin()
-	{
-		string? path = Path.GetDirectoryName(ModuleDirectory);
-		if (Directory.Exists(path + "/CS2-SimpleAdmin"))
-		{
-			string _configPath = Path.Combine(path, "../configs/plugins/CS2-SimpleAdmin/CS2-SimpleAdmin.json");
-			if (!File.Exists(_configPath))
-			{
-				return;
-			}
-			GaggedSteamids.Clear();
-			try
-			{
-				string configJson = await File.ReadAllTextAsync(_configPath);
-
-				dynamic config = JObject.Parse(configJson);
-
-				string connectionString = $"Server={config.DatabaseHost};Database={config.DatabaseName};Uid={config.DatabaseUser};Pwd={config.DatabasePassword};";
-
-				using var connection = new MySqlConnection(connectionString);
-				await connection.OpenAsync();
-
-				string query = "SELECT DISTINCT player_steamid FROM sa_mutes WHERE status = 'ACTIVE' AND type = 'GAG' AND (duration = 0 OR ends > NOW())";
-
-				using var cmd = new MySqlCommand(query, connection);
-				using MySqlDataReader reader = await cmd.ExecuteReaderAsync();
-
-				while (await reader.ReadAsync())
-				{
-					string steamID = reader.GetString("player_steamid");
-					GaggedSteamids.Add(steamID);
-				}
-			}
-			catch (Exception)
-			{
-			}
-		}
-	}
-	*/
 
 	private static void CreateOrLoadJsonFile(string filepath)
 	{
@@ -180,7 +128,7 @@ public class CS2_Tags : BasePlugin
 
 		if (player == null || !player.IsValid || player.IsBot) return;
 
-		AddTimer(2.5f, () => SetPlayerClanTag(player));
+		AddTimer(2.0f, () => SetPlayerClanTag(player));
 	}
 
 	private HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
@@ -189,7 +137,7 @@ public class CS2_Tags : BasePlugin
 
 		if (player == null || !player.IsValid || player.IsBot) return HookResult.Continue;
 
-		AddTimer(4.0f, () => SetPlayerClanTag(player));
+		AddTimer(2.0f, () => SetPlayerClanTag(player));
 
 		return HookResult.Continue;
 	}
@@ -199,7 +147,7 @@ public class CS2_Tags : BasePlugin
 		CCSPlayerController? player = @event.Userid;
 		if (player == null || !player.IsValid || player.IsBot) return HookResult.Continue;
 
-		AddTimer(1.0f, () => SetPlayerClanTag(player));
+		AddTimer(1.5f, () => SetPlayerClanTag(player));
 
 		return HookResult.Continue;
 	}
@@ -209,7 +157,7 @@ public class CS2_Tags : BasePlugin
 		CCSPlayerController? player = @event.Userid;
 		if (player == null || !player.IsValid || player.IsBot) return HookResult.Continue;
 
-		AddTimer(1.0f, () => SetPlayerClanTag(player));
+		AddTimer(1.5f, () => SetPlayerClanTag(player));
 
 		return HookResult.Continue;
 	}
@@ -393,7 +341,6 @@ public class CS2_Tags : BasePlugin
 
 				return HookResult.Handled;
 			}
-
 		}
 		return HookResult.Continue;
 	}
@@ -477,12 +424,15 @@ public class CS2_Tags : BasePlugin
 			case 0:
 				teamName = $"(NONE)";
 				break;
+
 			case 1:
 				teamName = $"(SPEC)";
 				break;
+
 			case 2:
 				teamName = $"{ChatColors.Yellow}(T)";
 				break;
+
 			case 3:
 				teamName = $"{ChatColors.Blue}(CT)";
 				break;
@@ -500,9 +450,11 @@ public class CS2_Tags : BasePlugin
 			case 2:
 				teamColor = $"{ChatColors.Gold}";
 				break;
+
 			case 3:
 				teamColor = $"{ChatColors.Blue}";
 				break;
+
 			default:
 				teamColor = "";
 				break;
@@ -529,5 +481,4 @@ public class CS2_Tags : BasePlugin
 
 		return message;
 	}
-
 }
