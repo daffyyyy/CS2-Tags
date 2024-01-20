@@ -1,5 +1,8 @@
 # CS2-Tags
 
+### Do you appreciate what I do? Buy me a cup of tea ❤️
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Y8Y4THKXG)
+
 ![image](https://github.com/daffyyyy/CS2-Tags/assets/41084667/25dd3f2b-0604-41a2-b2bd-9be230db71e1)
 ![image](https://github.com/daffyyyy/CS2-Tags/assets/41084667/663a0de1-b875-48fc-bda5-56add5a4833b)
 
