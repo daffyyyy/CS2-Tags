@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace CS2_Tags;
 
-[MinimumApiVersion(142)]
+[MinimumApiVersion(159)]
 public class CS2_Tags : BasePlugin
 {
 	private HashSet<ushort> GaggedIds = new HashSet<ushort>();
@@ -19,13 +19,14 @@ public class CS2_Tags : BasePlugin
 	public override string ModuleName => "CS2-Tags";
 	public override string ModuleDescription => "Add player tags easily in cs2 game";
 	public override string ModuleAuthor => "daffyy";
-	public override string ModuleVersion => "1.0.3b";
+	public override string ModuleVersion => "1.0.4b";
 
 	public override void Load(bool hotReload)
 	{
 		CreateOrLoadJsonFile(ModuleDirectory + "/tags.json");
 
 		RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
+		RegisterListener<Listeners.OnClientDisconnect>(OnClientDisconnect);
 		RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
 		RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawn);
 		RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
@@ -103,6 +104,8 @@ public class CS2_Tags : BasePlugin
 		if (userid == 0)
 			return;
 
+		Console.WriteLine(userid);
+
 		if (!GaggedIds.Contains(userid))
 			GaggedIds.Add(userid);
 	}
@@ -125,7 +128,7 @@ public class CS2_Tags : BasePlugin
 	{
 		CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
 
-		if (player == null || !player.IsValid || player.IsBot) return;
+		if (player == null || !player.IsValid || player.IsBot || player.IsHLTV) return;
 
 		AddTimer(2.0f, () => SetPlayerClanTag(player));
 	}
@@ -134,11 +137,20 @@ public class CS2_Tags : BasePlugin
 	{
 		CCSPlayerController? player = @event.Userid;
 
-		if (player == null || !player.IsValid || player.IsBot) return HookResult.Continue;
+		if (player == null || !player.IsValid || player.IsBot || player.IsHLTV) return HookResult.Continue;
 
 		AddTimer(2.0f, () => SetPlayerClanTag(player));
 
 		return HookResult.Continue;
+	}
+
+	private void OnClientDisconnect(int playerSlot)
+	{
+		CCSPlayerController? player = Utilities.GetPlayerFromSlot(playerSlot);
+
+		if (player == null || !player.IsValid || player.IsBot || player.IsHLTV) return;
+
+		GaggedIds.Remove((ushort)player.UserId!);
 	}
 
 	private HookResult OnPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)
@@ -348,7 +360,7 @@ public class CS2_Tags : BasePlugin
 	{
 		if (player == null || !player.IsValid || player.IsBot || player.IsHLTV || player.AuthorizedSteamID == null) return;
 
-		string steamid = player.AuthorizedSteamID!.SteamId64.ToString();
+		string steamid = player.SteamID!.ToString();
 
 		if (JsonTags != null && JsonTags.TryGetValue("tags", out var tags) && tags is JObject tagsObject)
 		{
