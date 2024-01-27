@@ -14,17 +14,18 @@ namespace CS2_Tags;
 [MinimumApiVersion(159)]
 public class CS2_Tags : BasePlugin
 {
-	private HashSet<ushort> GaggedIds = new HashSet<ushort>();
+	private HashSet<string> GaggedIds = new HashSet<string>();
 	public static JObject? JsonTags { get; private set; }
 	public override string ModuleName => "CS2-Tags";
 	public override string ModuleDescription => "Add player tags easily in cs2 game";
 	public override string ModuleAuthor => "daffyy";
-	public override string ModuleVersion => "1.0.4b";
+	public override string ModuleVersion => "1.0.4c";
 
 	public override void Load(bool hotReload)
 	{
 		CreateOrLoadJsonFile(ModuleDirectory + "/tags.json");
 
+		RegisterListener<Listeners.OnMapStart>(OnMapStart);
 		RegisterListener<Listeners.OnClientAuthorized>(OnClientAuthorized);
 		RegisterListener<Listeners.OnClientDisconnect>(OnClientDisconnect);
 		RegisterEventHandler<EventPlayerConnectFull>(OnPlayerConnectFull);
@@ -32,6 +33,11 @@ public class CS2_Tags : BasePlugin
 		RegisterEventHandler<EventPlayerDeath>(OnPlayerDeath);
 		AddCommandListener("say", OnPlayerChat);
 		AddCommandListener("say_team", OnPlayerChatTeam);
+	}
+
+	private void OnMapStart(string mapName)
+	{
+		GaggedIds.Clear();
 	}
 
 	private static void CreateOrLoadJsonFile(string filepath)
@@ -95,33 +101,29 @@ public class CS2_Tags : BasePlugin
 	}
 
 	[ConsoleCommand("css_tag_mute")]
-	[CommandHelper(minArgs: 1, usage: "<UserID>", whoCanExecute: CommandUsage.SERVER_ONLY)]
+	[CommandHelper(minArgs: 1, usage: "<SteamID>", whoCanExecute: CommandUsage.SERVER_ONLY)]
 	public void OnTagMuteCommand(CCSPlayerController? caller, CommandInfo command)
 	{
-		ushort userid = 0;
-		ushort.TryParse(command.GetArg(1), out userid);
+		string? steamid = command.GetArg(1);
 
-		if (userid == 0)
-			return;
-
-		Console.WriteLine(userid);
-
-		if (!GaggedIds.Contains(userid))
-			GaggedIds.Add(userid);
+		if (steamid.Length == 17)
+		{
+			if (!GaggedIds.Contains(steamid))
+				GaggedIds.Add(steamid);
+		}
 	}
 
 	[ConsoleCommand("css_tag_unmute")]
-	[CommandHelper(minArgs: 1, usage: "<UserID>", whoCanExecute: CommandUsage.SERVER_ONLY)]
+	[CommandHelper(minArgs: 1, usage: "<SteamID>", whoCanExecute: CommandUsage.SERVER_ONLY)]
 	public void OnTagUnMuteCommand(CCSPlayerController? caller, CommandInfo command)
 	{
-		ushort userid = 0;
-		ushort.TryParse(command.GetArg(1), out userid);
+		string? steamid = command.GetArg(1);
 
-		if (userid == 0)
-			return;
-
-		if (GaggedIds.Contains(userid))
-			GaggedIds.Remove(userid);
+		if (steamid.Length == 17)
+		{
+			if (GaggedIds.Contains(steamid))
+				GaggedIds.Remove(steamid);
+		}
 	}
 
 	private void OnClientAuthorized(int playerSlot, SteamID steamId)
@@ -150,7 +152,7 @@ public class CS2_Tags : BasePlugin
 
 		if (player == null || !player.IsValid || player.IsBot || player.IsHLTV) return;
 
-		GaggedIds.Remove((ushort)player.UserId!);
+		GaggedIds.Remove(player.SteamID.ToString()!);
 	}
 
 	private HookResult OnPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)
@@ -178,7 +180,7 @@ public class CS2_Tags : BasePlugin
 		if (player == null || !player.IsValid || info.GetArg(1).Length == 0 || player.AuthorizedSteamID == null) return HookResult.Continue;
 		string steamid = player.AuthorizedSteamID.SteamId64.ToString();
 
-		if (player.UserId != null && GaggedIds.Contains((ushort)player.UserId)) return HookResult.Handled;
+		if (player.SteamID.ToString() != "" && GaggedIds.Contains(player.SteamID.ToString())) return HookResult.Handled;
 
 		if (info.GetArg(1).StartsWith("!") || info.GetArg(1).StartsWith("@") || info.GetArg(1).StartsWith("/") || info.GetArg(1).StartsWith(".") || info.GetArg(1) == "rtv") return HookResult.Continue;
 
@@ -260,7 +262,7 @@ public class CS2_Tags : BasePlugin
 		if (player == null || !player.IsValid || info.GetArg(1).Length == 0 || player.AuthorizedSteamID == null) return HookResult.Continue;
 		string steamid = player.AuthorizedSteamID.SteamId64.ToString();
 
-		if (player.UserId != null && GaggedIds.Contains((ushort)player.UserId)) return HookResult.Handled;
+		if (player.SteamID.ToString() != "" && GaggedIds.Contains(player.SteamID.ToString())) return HookResult.Handled;
 
 		if (info.GetArg(1).StartsWith("@") && AdminManager.PlayerHasPermissions(player, "@css/chat"))
 		{
